@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { PlusCircle, Trash2, Search } from 'lucide-react';
+import { PlusCircle, Trash2, Search, Download, Upload, Eye } from 'lucide-react';
 import { BacktestScreenshot } from '../../types';
 import { db } from '../../db';
 import { fileToDataUrl } from '../../utils/mediaHelpers';
 import { Button } from '../ui/Button';
 import { Card, CardContent } from '../ui/Card';
+import { ImageViewer } from '../ui/ImageViewer';
 
 const BacktestGallery: React.FC = () => {
   const [backtests, setBacktests] = useState<BacktestScreenshot[]>([]);
   const [filteredBacktests, setFilteredBacktests] = useState<BacktestScreenshot[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [imageViewerImages, setImageViewerImages] = useState<Array<{ src: string; title: string; alt: string }>>([]);
+  const [imageViewerIndex, setImageViewerIndex] = useState(0);
 
   useEffect(() => {
     const loadBacktests = async () => {
@@ -44,19 +48,22 @@ const BacktestGallery: React.FC = () => {
     if (!e.target.files || e.target.files.length === 0) return;
 
     try {
-      const file = e.target.files[0];
-      const dataUrl = await fileToDataUrl(file);
+      const files = Array.from(e.target.files);
       
-      const newBacktest: BacktestScreenshot = {
-        id: crypto.randomUUID(),
-        description: 'New Backtest',
-        dataUrl
-      };
+      for (const file of files) {
+        const dataUrl = await fileToDataUrl(file);
+        
+        const newBacktest: Omit<BacktestScreenshot, 'id'> = {
+          description: `Backtest - ${file.name.split('.')[0]}`,
+          dataUrl
+        };
+        
+        const id = await db.backtests.add(newBacktest);
+        
+        setBacktests(prev => [...prev, { ...newBacktest, id: id.toString() }]);
+      }
       
-      const id = await db.backtests.add(newBacktest);
-      
-      setBacktests(prev => [...prev, { ...newBacktest, id: id.toString() }]);
-      
+      alert(`Successfully uploaded ${files.length} backtest(s)!`);
     } catch (error) {
       console.error('Error uploading backtest:', error);
       alert('Error uploading backtest. Please try again.');
@@ -91,6 +98,71 @@ const BacktestGallery: React.FC = () => {
     }
   };
 
+  const openImageViewer = (index: number) => {
+    const images = filteredBacktests.map((backtest, i) => ({
+      src: backtest.dataUrl,
+      title: backtest.description,
+      alt: `Backtest ${i + 1}`
+    }));
+    
+    setImageViewerImages(images);
+    setImageViewerIndex(index);
+    setImageViewerOpen(true);
+  };
+
+  const exportBacktests = async () => {
+    try {
+      const dataStr = JSON.stringify(backtests, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      
+      const url = URL.createObjectURL(dataBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `backtests-export-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error exporting backtests:', error);
+      alert('Error exporting backtests. Please try again.');
+    }
+  };
+
+  const importBacktests = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    try {
+      const file = e.target.files[0];
+      const text = await file.text();
+      const importedBacktests = JSON.parse(text);
+      
+      if (!Array.isArray(importedBacktests)) {
+        throw new Error('Invalid file format');
+      }
+      
+      for (const backtest of importedBacktests) {
+        await db.backtests.add({
+          description: backtest.description,
+          dataUrl: backtest.dataUrl
+        });
+      }
+      
+      // Reload backtests
+      const result = await db.backtests.toArray();
+      setBacktests(result);
+      setFilteredBacktests(result);
+      
+      alert(`Successfully imported ${importedBacktests.length} backtest(s)!`);
+    } catch (error) {
+      console.error('Error importing backtests:', error);
+      alert('Error importing backtests. Please check the file format and try again.');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -118,11 +190,38 @@ const BacktestGallery: React.FC = () => {
             />
           </div>
           
-          <div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportBacktests}
+              icon={<Download size={16} />}
+              disabled={backtests.length === 0}
+            >
+              Export
+            </Button>
+            
+            <label className="cursor-pointer">
+              <input
+                type="file"
+                accept="application/json"
+                className="hidden"
+                onChange={importBacktests}
+              />
+              <Button 
+                variant="outline"
+                size="sm"
+                icon={<Upload size={16} />}
+              >
+                Import
+              </Button>
+            </label>
+            
             <label className="cursor-pointer">
               <input
                 type="file"
                 accept="image/*"
+                multiple
                 className="hidden"
                 onChange={handleUploadBacktest}
               />
@@ -154,6 +253,7 @@ const BacktestGallery: React.FC = () => {
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       className="hidden"
                       onChange={handleUploadBacktest}
                     />
@@ -170,21 +270,35 @@ const BacktestGallery: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredBacktests.map(backtest => (
-            <Card key={backtest.id} className="overflow-hidden">
-              <img 
-                src={backtest.dataUrl} 
-                alt={backtest.description} 
-                className="w-full h-48 object-cover"
-              />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredBacktests.map((backtest, index) => (
+            <Card key={backtest.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="relative group">
+                <img 
+                  src={backtest.dataUrl} 
+                  alt={backtest.description} 
+                  className="w-full h-48 object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => openImageViewer(index)}
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => openImageViewer(index)}
+                    icon={<Eye size={16} />}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-white hover:bg-white hover:bg-opacity-20"
+                  >
+                    View
+                  </Button>
+                </div>
+              </div>
               <CardContent className="p-4">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-2">
                   <input
                     type="text"
                     value={backtest.description}
                     onChange={(e) => handleUpdateDescription(backtest.id, e.target.value)}
-                    className="flex-1 mr-2 p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    className="flex-1 p-2 border rounded text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     placeholder="Description..."
                   />
                   <Button
@@ -200,6 +314,14 @@ const BacktestGallery: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Image Viewer */}
+      <ImageViewer
+        images={imageViewerImages}
+        initialIndex={imageViewerIndex}
+        isOpen={imageViewerOpen}
+        onClose={() => setImageViewerOpen(false)}
+      />
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { MenuIcon, X, LineChart, PlusCircle, List, BarChart4, Home, TrendingDown, Settings } from 'lucide-react';
+import { MenuIcon, X, LineChart, PlusCircle, List, BarChart4, Home, TrendingDown, Settings, BookOpen, Shield } from 'lucide-react';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,6 +33,8 @@ const Navbar: React.FC = () => {
     { to: '/missed-trades', label: 'Missed Trades', icon: <TrendingDown size={20} /> },
     { to: '/stats', label: 'Statistics', icon: <BarChart4 size={20} /> },
     { to: '/backtests', label: 'Backtests', icon: <LineChart size={20} /> },
+    { to: '/journal', label: 'Journal', icon: <BookOpen size={20} /> },
+    { to: '/risk', label: 'Risk', icon: <Shield size={20} /> },
     { to: '/settings', label: 'Settings', icon: <Settings size={20} /> },
   ];
 

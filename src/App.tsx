@@ -6,7 +6,11 @@ import TradeForm from './components/trades/TradeForm';
 import TradeList from './components/trades/TradeList';
 import TradeDetail from './components/trades/TradeDetail';
 import MissedTradesList from './components/trades/MissedTradesList';
+import MissedTradeForm from './components/trades/MissedTradeForm';
+import MissedTradeDetail from './components/trades/MissedTradeDetail';
 import BacktestGallery from './components/backtest/BacktestGallery';
+import TradingJournal from './components/analytics/TradingJournal';
+import RiskManagement from './components/analytics/RiskManagement';
 import ImportExport from './components/settings/ImportExport';
 
 function App() {
@@ -31,7 +35,12 @@ function App() {
         <Route path="/trades/:id" element={<TradeDetail />} />
         <Route path="/trades/:id/edit" element={<TradeForm editMode={true} />} />
         <Route path="/missed-trades" element={<MissedTradesList />} />
+        <Route path="/missed-trades/add" element={<MissedTradeForm />} />
+        <Route path="/missed-trades/:id" element={<MissedTradeDetail />} />
+        <Route path="/missed-trades/:id/edit" element={<MissedTradeForm editMode={true} />} />
         <Route path="/backtests" element={<BacktestGallery />} />
+        <Route path="/journal" element={<TradingJournal />} />
+        <Route path="/risk" element={<RiskManagement />} />
         <Route path="/stats" element={<Dashboard />} />
         <Route path="/settings" element={<ImportExport />} />
       </Routes>
