@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PlusCircle, Trash2, Search, Download, Upload, Eye } from 'lucide-react';
 import { BacktestScreenshot } from '../../types';
 import { db } from '../../db';
@@ -16,6 +16,10 @@ const BacktestGallery: React.FC = () => {
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [imageViewerImages, setImageViewerImages] = useState<Array<{ src: string; title: string; alt: string }>>([]);
   const [imageViewerIndex, setImageViewerIndex] = useState(0);
+  
+  // Create refs for file inputs
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const loadBacktests = async () => {
@@ -57,11 +61,18 @@ const BacktestGallery: React.FC = () => {
       const newBacktests: BacktestScreenshot[] = [];
       
       for (const file of files) {
-        console.log('Processing file:', file.name, file.type);
+        console.log('Processing file:', file.name, file.type, file.size);
         
         // Validate file type
         if (!file.type.startsWith('image/')) {
           console.warn('Skipping non-image file:', file.name);
+          continue;
+        }
+        
+        // Check file size (10MB limit)
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+          console.warn('File too large:', file.name);
           continue;
         }
         
@@ -92,7 +103,7 @@ const BacktestGallery: React.FC = () => {
         setBacktests(prev => [...prev, ...newBacktests]);
         alert(`Successfully uploaded ${newBacktests.length} backtest(s)!`);
       } else {
-        alert('No valid image files were uploaded. Please select image files only.');
+        alert('No valid image files were uploaded. Please select image files (JPEG, PNG, GIF, WebP) under 10MB.');
       }
       
     } catch (error) {
@@ -195,6 +206,15 @@ const BacktestGallery: React.FC = () => {
     }
   };
 
+  // Function to trigger file input click
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const triggerImport = () => {
+    importInputRef.current?.click();
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -233,41 +253,43 @@ const BacktestGallery: React.FC = () => {
               Export
             </Button>
             
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept="application/json"
-                className="hidden"
-                onChange={importBacktests}
-              />
-              <Button 
-                variant="outline"
-                size="sm"
-                icon={<Upload size={16} />}
-              >
-                Import
-              </Button>
-            </label>
+            {/* Hidden import input */}
+            <input
+              ref={importInputRef}
+              type="file"
+              accept="application/json"
+              className="hidden"
+              onChange={importBacktests}
+            />
+            <Button 
+              variant="outline"
+              size="sm"
+              icon={<Upload size={16} />}
+              onClick={triggerImport}
+            >
+              Import
+            </Button>
             
-            <label className="cursor-pointer">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleUploadBacktest}
-                disabled={uploading}
-              />
-              <Button 
-                variant="primary"
-                icon={<PlusCircle size={18} />}
-                className="whitespace-nowrap"
-                isLoading={uploading}
-                disabled={uploading}
-              >
-                {uploading ? 'Uploading...' : 'Add Backtest'}
-              </Button>
-            </label>
+            {/* Hidden file input for backtest upload */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={handleUploadBacktest}
+              disabled={uploading}
+            />
+            <Button 
+              variant="primary"
+              icon={<PlusCircle size={18} />}
+              className="whitespace-nowrap"
+              isLoading={uploading}
+              disabled={uploading}
+              onClick={triggerFileUpload}
+            >
+              {uploading ? 'Uploading...' : 'Add Backtest'}
+            </Button>
           </div>
         </div>
       </div>
@@ -293,24 +315,25 @@ const BacktestGallery: React.FC = () => {
                   <p className="text-gray-500 dark:text-gray-400 mb-6">
                     Start uploading your backtest screenshots to build your reference library.
                   </p>
-                  <label className="cursor-pointer">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      className="hidden"
-                      onChange={handleUploadBacktest}
-                      disabled={uploading}
-                    />
-                    <Button 
-                      variant="primary"
-                      icon={<PlusCircle size={18} />}
-                      isLoading={uploading}
-                      disabled={uploading}
-                    >
-                      {uploading ? 'Uploading...' : 'Upload First Backtest'}
-                    </Button>
-                  </label>
+                  {/* Hidden file input for first upload */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={handleUploadBacktest}
+                    disabled={uploading}
+                    id="first-upload-input"
+                  />
+                  <Button 
+                    variant="primary"
+                    icon={<PlusCircle size={18} />}
+                    isLoading={uploading}
+                    disabled={uploading}
+                    onClick={() => document.getElementById('first-upload-input')?.click()}
+                  >
+                    {uploading ? 'Uploading...' : 'Upload First Backtest'}
+                  </Button>
                 </>
               )}
             </div>
