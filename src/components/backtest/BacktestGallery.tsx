@@ -12,6 +12,7 @@ const BacktestGallery: React.FC = () => {
   const [filteredBacktests, setFilteredBacktests] = useState<BacktestScreenshot[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [imageViewerImages, setImageViewerImages] = useState<Array<{ src: string; title: string; alt: string }>>([]);
   const [imageViewerIndex, setImageViewerIndex] = useState(0);
@@ -47,28 +48,59 @@ const BacktestGallery: React.FC = () => {
   const handleUploadBacktest = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
 
+    setUploading(true);
+    
     try {
       const files = Array.from(e.target.files);
+      console.log('Files selected:', files.length);
+      
+      const newBacktests: BacktestScreenshot[] = [];
       
       for (const file of files) {
-        const dataUrl = await fileToDataUrl(file);
+        console.log('Processing file:', file.name, file.type);
         
-        const newBacktest: Omit<BacktestScreenshot, 'id'> = {
-          description: `Backtest - ${file.name.split('.')[0]}`,
-          dataUrl
-        };
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          console.warn('Skipping non-image file:', file.name);
+          continue;
+        }
         
-        const id = await db.backtests.add(newBacktest);
-        
-        setBacktests(prev => [...prev, { ...newBacktest, id: id.toString() }]);
+        try {
+          const dataUrl = await fileToDataUrl(file);
+          console.log('Data URL created for:', file.name);
+          
+          const newBacktest: Omit<BacktestScreenshot, 'id'> = {
+            description: `Backtest - ${file.name.split('.')[0]}`,
+            dataUrl
+          };
+          
+          const id = await db.backtests.add(newBacktest);
+          console.log('Added to database with ID:', id);
+          
+          const savedBacktest: BacktestScreenshot = {
+            ...newBacktest,
+            id: id.toString()
+          };
+          
+          newBacktests.push(savedBacktest);
+        } catch (fileError) {
+          console.error('Error processing file:', file.name, fileError);
+        }
       }
       
-      alert(`Successfully uploaded ${files.length} backtest(s)!`);
+      if (newBacktests.length > 0) {
+        setBacktests(prev => [...prev, ...newBacktests]);
+        alert(`Successfully uploaded ${newBacktests.length} backtest(s)!`);
+      } else {
+        alert('No valid image files were uploaded. Please select image files only.');
+      }
+      
     } catch (error) {
-      console.error('Error uploading backtest:', error);
-      alert('Error uploading backtest. Please try again.');
+      console.error('Error uploading backtests:', error);
+      alert('Error uploading backtests. Please try again.');
     } finally {
-      e.target.value = '';
+      setUploading(false);
+      e.target.value = ''; // Reset file input
     }
   };
 
@@ -224,18 +256,30 @@ const BacktestGallery: React.FC = () => {
                 multiple
                 className="hidden"
                 onChange={handleUploadBacktest}
+                disabled={uploading}
               />
               <Button 
                 variant="primary"
                 icon={<PlusCircle size={18} />}
                 className="whitespace-nowrap"
+                isLoading={uploading}
+                disabled={uploading}
               >
-                Add Backtest
+                {uploading ? 'Uploading...' : 'Add Backtest'}
               </Button>
             </label>
           </div>
         </div>
       </div>
+
+      {/* Debug Info */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg text-sm">
+          <p className="text-blue-800 dark:text-blue-200">
+            Debug: {backtests.length} backtests loaded, {filteredBacktests.length} filtered
+          </p>
+        </div>
+      )}
 
       {filteredBacktests.length === 0 ? (
         <Card>
@@ -256,12 +300,15 @@ const BacktestGallery: React.FC = () => {
                       multiple
                       className="hidden"
                       onChange={handleUploadBacktest}
+                      disabled={uploading}
                     />
                     <Button 
                       variant="primary"
                       icon={<PlusCircle size={18} />}
+                      isLoading={uploading}
+                      disabled={uploading}
                     >
-                      Upload First Backtest
+                      {uploading ? 'Uploading...' : 'Upload First Backtest'}
                     </Button>
                   </label>
                 </>

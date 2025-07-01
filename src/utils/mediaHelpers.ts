@@ -3,9 +3,38 @@
  */
 export const fileToDataUrl = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
+    if (!file) {
+      reject(new Error('No file provided'));
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('File must be an image'));
+      return;
+    }
+
+    // Check file size (limit to 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      reject(new Error('File size must be less than 10MB'));
+      return;
+    }
+
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    
+    reader.onload = () => {
+      if (reader.result) {
+        resolve(reader.result as string);
+      } else {
+        reject(new Error('Failed to read file'));
+      }
+    };
+    
+    reader.onerror = () => {
+      reject(new Error('Error reading file'));
+    };
+    
     reader.readAsDataURL(file);
   });
 };
@@ -18,8 +47,12 @@ export const processFiles = async (files: FileList | null): Promise<string[]> =>
   
   const dataUrls: string[] = [];
   for (let i = 0; i < files.length; i++) {
-    const dataUrl = await fileToDataUrl(files[i]);
-    dataUrls.push(dataUrl);
+    try {
+      const dataUrl = await fileToDataUrl(files[i]);
+      dataUrls.push(dataUrl);
+    } catch (error) {
+      console.error(`Error processing file ${files[i].name}:`, error);
+    }
   }
   
   return dataUrls;
@@ -116,4 +149,33 @@ export const estimateStorageUsage = async (): Promise<number> => {
     return estimate.usage || 0;
   }
   return 0;
+};
+
+/**
+ * Validates image file
+ */
+export const validateImageFile = (file: File): { valid: boolean; error?: string } => {
+  // Check if file exists
+  if (!file) {
+    return { valid: false, error: 'No file provided' };
+  }
+
+  // Check file type
+  if (!file.type.startsWith('image/')) {
+    return { valid: false, error: 'File must be an image' };
+  }
+
+  // Check file size (10MB limit)
+  const maxSize = 10 * 1024 * 1024;
+  if (file.size > maxSize) {
+    return { valid: false, error: 'File size must be less than 10MB' };
+  }
+
+  // Check for common image formats
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  if (!allowedTypes.includes(file.type.toLowerCase())) {
+    return { valid: false, error: 'Unsupported image format. Please use JPEG, PNG, GIF, or WebP' };
+  }
+
+  return { valid: true };
 };
