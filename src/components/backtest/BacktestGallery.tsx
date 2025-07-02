@@ -32,11 +32,65 @@ const entryTypes: EntryType[] = ['2 touch', '3 touch', 'v touch', 'mechanical', 
 const timeframes = ['1m', '5m', '15m', '30m', '1h', '4h', '1d', '1w', '1M'];
 const strategies = ['Continuation', 'Reversal', 'Breakout', 'Pullback', 'Scalping', 'Swing'];
 
-const popularPairs = [
-  'EUR/USD', 'GBP/USD', 'USD/JPY', 'USD/CHF', 'AUD/USD', 'USD/CAD',
-  'NZD/USD', 'EUR/GBP', 'EUR/JPY', 'GBP/JPY', 'CHF/JPY', 'AUD/JPY',
-  'EUR/AUD', 'EUR/CAD', 'GBP/AUD', 'GBP/CAD'
-];
+// Organized currency pairs by category
+const currencyPairs = {
+  'Majors': [
+    'EUR/USD',
+    'USD/CAD', 
+    'GBP/USD',
+    'USD/JPY',
+    'USD/CHF',
+    'NZD/USD'
+  ],
+  'GBP Pairs': [
+    'GBP/AUD',
+    'GBP/CHF',
+    'GBP/JPY',
+    'GBP/CAD',
+    'GBP/NZD'
+  ],
+  'AUD Pairs': [
+    'AUD/CHF',
+    'AUD/JPY',
+    'AUD/USD',
+    'AUD/CAD',
+    'AUD/NZD'
+  ],
+  'EUR Pairs': [
+    'EUR/AUD',
+    'EUR/CHF',
+    'EUR/CAD',
+    'EUR/GBP',
+    'EUR/JPY'
+  ],
+  'NZD Pairs': [
+    'EUR/NZD',
+    'NZD/CAD',
+    'NZD/JPY',
+    'NZD/CHF'
+  ],
+  'CAD Pairs': [
+    'CAD/CHF',
+    'CHF/JPY',
+    'CAD/JPY'
+  ],
+  'Crypto': [
+    'ETH/USD',
+    'BTC/USD',
+    'XAU/USD',
+    'XRP/USD',
+    'LTC/USD'
+  ],
+  'Commodities': [
+    'USO/IL'
+  ],
+  'Indices': [
+    'US30'
+  ]
+};
+
+// Flatten all pairs for easy access
+const allPairs = Object.values(currencyPairs).flat().sort();
 
 interface BacktestUploadModalProps {
   isOpen: boolean;
@@ -137,8 +191,12 @@ const BacktestUploadModal: React.FC<BacktestUploadModalProps> = ({
                 required
               >
                 <option value="">Select Currency Pair</option>
-                {popularPairs.map(pair => (
-                  <option key={pair} value={pair}>{pair}</option>
+                {Object.entries(currencyPairs).map(([category, pairs]) => (
+                  <optgroup key={category} label={category}>
+                    {pairs.map(pair => (
+                      <option key={pair} value={pair}>{pair}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -497,7 +555,7 @@ const BacktestGallery: React.FC = () => {
     return acc;
   }, {} as Record<string, BacktestScreenshot[]>);
 
-  const currencyPairs = Object.keys(groupedBacktests).sort();
+  const currencyPairsList = Object.keys(groupedBacktests).sort();
 
   if (loading) {
     return (
@@ -582,8 +640,12 @@ const BacktestGallery: React.FC = () => {
                 className="px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               >
                 <option value="">All Pairs</option>
-                {popularPairs.map(pair => (
-                  <option key={pair} value={pair}>{pair}</option>
+                {Object.entries(currencyPairs).map(([category, pairs]) => (
+                  <optgroup key={category} label={category}>
+                    {pairs.map(pair => (
+                      <option key={pair} value={pair}>{pair}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
               
@@ -627,9 +689,9 @@ const BacktestGallery: React.FC = () => {
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 {filteredBacktests.length} of {backtests.length} backtests
               </span>
-              {currencyPairs.length > 0 && (
+              {currencyPairsList.length > 0 && (
                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                  • {currencyPairs.length} currency pairs
+                  • {currencyPairsList.length} currency pairs
                 </span>
               )}
             </div>
@@ -704,7 +766,7 @@ const BacktestGallery: React.FC = () => {
           {/* Folder View */}
           {viewMode === 'folders' && (
             <div className="space-y-4">
-              {currencyPairs.map(pair => {
+              {currencyPairsList.map(pair => {
                 const pairBacktests = groupedBacktests[pair];
                 const isExpanded = expandedFolders.has(pair);
                 
