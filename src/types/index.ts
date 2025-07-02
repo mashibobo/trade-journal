@@ -15,6 +15,13 @@ export interface BacktestScreenshot {
   id: string;
   description: string;
   dataUrl: string;
+  currencyPair: string;
+  entryType: EntryType;
+  timeframe: string;
+  strategy?: string;
+  notes?: string;
+  createdAt: Date;
+  tags?: string[];
 }
 
 export interface TradeMedia {

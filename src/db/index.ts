@@ -9,9 +9,9 @@ class TradeDatabase extends Dexie {
   constructor() {
     super('ForexTraderProgressTracker');
     
-    this.version(2).stores({
+    this.version(3).stores({
       trades: '++id, pair, entryType, outcome, tradeType, entryDate, createdAt, updatedAt',
-      backtests: '++id, description',
+      backtests: '++id, description, currencyPair, entryType, timeframe, createdAt',
       missedTrades: '++id, pair, entryType, missedDate, createdAt, updatedAt'
     });
   }
@@ -93,6 +93,47 @@ export async function getMissedTrade(id: string): Promise<MissedTrade | undefine
 
 export async function getAllMissedTrades(): Promise<MissedTrade[]> {
   return db.missedTrades.toArray();
+}
+
+// Backtest functions
+export async function addBacktest(backtest: Omit<BacktestScreenshot, 'id' | 'createdAt'>): Promise<string> {
+  const now = new Date();
+  const id = await db.backtests.add({
+    ...backtest,
+    id: crypto.randomUUID(),
+    createdAt: now,
+  });
+  return id.toString();
+}
+
+export async function updateBacktest(id: string, backtest: Partial<Omit<BacktestScreenshot, 'id' | 'createdAt'>>): Promise<void> {
+  await db.backtests.update(id, backtest);
+}
+
+export async function deleteBacktest(id: string): Promise<void> {
+  await db.backtests.delete(id);
+}
+
+export async function getBacktest(id: string): Promise<BacktestScreenshot | undefined> {
+  return db.backtests.get(id);
+}
+
+export async function getAllBacktests(): Promise<BacktestScreenshot[]> {
+  return db.backtests.orderBy('createdAt').reverse().toArray();
+}
+
+export async function getBacktestsByCurrencyPair(currencyPair: string): Promise<BacktestScreenshot[]> {
+  return db.backtests
+    .where('currencyPair')
+    .equals(currencyPair)
+    .toArray();
+}
+
+export async function getBacktestsByEntryType(entryType: string): Promise<BacktestScreenshot[]> {
+  return db.backtests
+    .where('entryType')
+    .equals(entryType)
+    .toArray();
 }
 
 // Database export/import
