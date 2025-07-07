@@ -10,7 +10,7 @@ class TradeDatabase extends Dexie {
     super('ForexTraderProgressTracker');
     
     this.version(3).stores({
-      trades: '++id, pair, entryType, outcome, tradeType, entryDate, createdAt, updatedAt',
+      trades: '++id, pair, entryType, outcome, tradeType, direction, entryDate, createdAt, updatedAt',
       backtests: '++id, description, currencyPair, entryType, timeframe, createdAt',
       missedTrades: '++id, pair, entryType, missedDate, createdAt, updatedAt'
     });

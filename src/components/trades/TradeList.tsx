@@ -17,6 +17,7 @@ const TradeList: React.FC = () => {
     entryType: '' as EntryType | '',
     outcome: '' as TradeOutcome | '',
     tradeType: '' as 'executed' | 'missed' | '',
+    direction: '' as 'buy' | 'sell' | '',
     dateFrom: '',
     dateTo: '',
   });
@@ -73,6 +74,10 @@ const TradeList: React.FC = () => {
       filtered = filtered.filter((trade) => trade.tradeType === filters.tradeType);
     }
 
+    // Apply direction filter
+    if (filters.direction) {
+      filtered = filtered.filter((trade) => trade.direction === filters.direction);
+    }
     // Apply date range filter
     if (filters.dateFrom) {
       const fromDate = new Date(filters.dateFrom);
@@ -114,6 +119,7 @@ const TradeList: React.FC = () => {
       entryType: '',
       outcome: '',
       tradeType: '',
+      direction: '',
       dateFrom: '',
       dateTo: '',
     });
@@ -248,6 +254,16 @@ const TradeList: React.FC = () => {
                 value={filters.dateTo}
                 onChange={handleFilterChange}
               />
+              
+              <select
+                value={filters.direction}
+                onChange={(e) => setFilters(prev => ({ ...prev, direction: e.target.value as any }))}
+                className="px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              >
+                <option value="">All Directions</option>
+                <option value="buy">Buy (Long)</option>
+                <option value="sell">Sell (Short)</option>
+              </select>
             </div>
           </div>
           <div className="mt-4 flex justify-end">

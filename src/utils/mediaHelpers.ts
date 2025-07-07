@@ -8,9 +8,9 @@ export const fileToDataUrl = (file: File): Promise<string> => {
       return;
     }
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      reject(new Error('File must be an image'));
+    // Validate file type (allow images and videos)
+    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+      reject(new Error('File must be an image or video'));
       return;
     }
 

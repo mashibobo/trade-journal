@@ -152,6 +152,12 @@ const TradeDetail: React.FC = () => {
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400">
                 {trade.entryType.toUpperCase()}
               </span>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                trade.direction === 'buy' ? 'bg-green-50 text-green-600 dark:bg-green-900/20 dark:text-green-400' : 
+                'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'
+              }`}>
+                {trade.direction.toUpperCase()}
+              </span>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400">
                 {trade.tradeType.charAt(0).toUpperCase() + trade.tradeType.slice(1)}
               </span>

@@ -37,6 +37,7 @@ export interface Trade {
   entryType: EntryType;
   outcome: TradeOutcome;
   tradeType: TradeType;
+  direction: 'buy' | 'sell';
   entryDate: Date;
   entryPrice: number;
   exitPrice: number;
