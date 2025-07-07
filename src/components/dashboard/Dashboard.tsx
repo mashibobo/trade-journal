@@ -336,7 +336,7 @@ const Dashboard: React.FC = () => {
                     {trades.slice(0, 5).map((trade) => {
                       const priceDiff = trade.exitPrice - trade.entryPrice;
                       const isProfit = priceDiff > 0;
-                      const profitLossAmount = Math.abs(priceDiff) * trade.lotSize;
+                      const profitLossAmount = Math.abs(priceDiff) * trade.volume;
                       
                       return (
                         <tr key={trade.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">

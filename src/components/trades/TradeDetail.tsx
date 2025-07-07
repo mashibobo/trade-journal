@@ -80,7 +80,7 @@ const TradeDetail: React.FC = () => {
   // Calculate profit/loss and pips
   const priceDiff = trade.exitPrice - trade.entryPrice;
   const isProfit = priceDiff > 0;
-  const profitLossAmount = Math.abs(priceDiff) * trade.lotSize;
+  const profitLossAmount = Math.abs(priceDiff) * trade.volume;
   const pips = formatPips(Math.abs(priceDiff));
   
   const getOutcomeColor = (outcome: string) => {
@@ -212,8 +212,8 @@ const TradeDetail: React.FC = () => {
                     <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{trade.takeProfit.toFixed(5)}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Lot Size</h3>
-                    <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{trade.lotSize}</p>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Volume (Lot Size)</h3>
+                    <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-white">{trade.volume} lots</p>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Risk:Reward Ratio</h3>
@@ -239,11 +239,20 @@ const TradeDetail: React.FC = () => {
                 </div>
                 
                 <div>
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">P&L Amount</h3>
+                  <p className={`mt-1 text-lg font-semibold ${
+                    isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    {isProfit ? '+' : '-'}${profitLossAmount.toFixed(2)}
+                  </p>
+                </div>
+                
+                <div>
                   <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">Result</h3>
                   <p className={`mt-1 text-lg font-semibold ${
                     isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                   }`}>
-                    {isProfit ? '+' : '-'}${profitLossAmount.toFixed(2)} ({pips} pips)
+                    {formatPips(calculatePips(priceDiff, trade.pair), trade.pair)} pips
                   </p>
                 </div>
                 

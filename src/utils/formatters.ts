@@ -1,22 +1,21 @@
 /**
  * Format pips with proper decimal places
- * For most pairs: 25.8 pips, 147.2 pips
- * For JPY pairs: 2.58 pips, 14.7 pips
+ * Professional 3-digit pip formatting like TradingView
  */
 export const formatPips = (pips: number, pair?: string): string => {
   const isJPYPair = pair?.includes('JPY') || false;
   
   if (isJPYPair) {
-    // JPY pairs: show more decimal places
-    if (pips >= 100) {
-      return pips.toFixed(1);
-    } else if (pips >= 10) {
-      return pips.toFixed(1);
+    // JPY pairs: 1 pip = 0.01, format to 1 decimal place
+    if (pips >= 1000) {
+      return (pips / 1000).toFixed(1) + 'K';
+    } else if (pips >= 100) {
+      return pips.toFixed(0);
     } else {
-      return pips.toFixed(2);
+      return pips.toFixed(1);
     }
   } else {
-    // Regular pairs: show 1 decimal place for numbers >= 10, 1 decimal for smaller
+    // Regular pairs: 1 pip = 0.0001, format to 1 decimal place
     if (pips >= 100) {
       return pips.toFixed(0);
     } else if (pips >= 10) {

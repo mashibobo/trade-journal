@@ -43,7 +43,7 @@ export interface Trade {
   exitPrice: number;
   stopLoss: number;
   takeProfit: number;
-  lotSize: number;
+  volume: number;
   riskRewardRatio: number;
   stopLossAmount: number;
   takeProfitAmount: number;

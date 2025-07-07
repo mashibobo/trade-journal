@@ -29,7 +29,7 @@ const TradeCard: React.FC<TradeCardProps> = ({ trade, onDelete }) => {
   // Calculate profit/loss and pips
   const priceDiff = trade.exitPrice - trade.entryPrice;
   const isProfit = priceDiff > 0;
-  const profitLossAmount = Math.abs(priceDiff) * trade.lotSize;
+  const profitLossAmount = Math.abs(priceDiff) * trade.volume;
   const pips = calculatePips(priceDiff, trade.pair);
   const formattedPips = formatPips(pips, trade.pair);
 
@@ -88,9 +88,21 @@ const TradeCard: React.FC<TradeCardProps> = ({ trade, onDelete }) => {
         </div>
 
         <div className="mt-4">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Volume</p>
+          <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">{trade.volume} lots</p>
+        </div>
+
+        <div className="mt-4">
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">P&L Amount</p>
+          <p className={`mt-1 text-sm font-medium ${isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            {isProfit ? '+' : '-'}${profitLossAmount.toFixed(2)}
+          </p>
+        </div>
+
+        <div className="mt-4">
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Result</p>
           <p className={`mt-1 text-sm font-medium ${isProfit ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-            {isProfit ? '+' : '-'}${profitLossAmount.toFixed(2)} ({formattedPips} pips)
+            {formattedPips} pips
           </p>
         </div>
 

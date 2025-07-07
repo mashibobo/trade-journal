@@ -94,7 +94,7 @@ const MT5ImportModal: React.FC<MT5ImportModalProps> = ({ isOpen, onClose, trades
                     Type
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Volume
+                    Volume (Lot Size)
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Entry
@@ -208,7 +208,7 @@ const TradeForm: React.FC<TradeFormProps> = ({ editMode = false }) => {
     exitPrice: string;
     stopLoss: string;
     takeProfit: string;
-    lotSize: string;
+    volume: string;
     stopLossAmount: string;
     takeProfitAmount: string;
     breakEvenAmount: string;
@@ -231,7 +231,7 @@ const TradeForm: React.FC<TradeFormProps> = ({ editMode = false }) => {
     exitPrice: '',
     stopLoss: '',
     takeProfit: '',
-    lotSize: '',
+    volume: '',
     stopLossAmount: '',
     takeProfitAmount: '',
     breakEvenAmount: '',
@@ -261,9 +261,9 @@ const TradeForm: React.FC<TradeFormProps> = ({ editMode = false }) => {
           exitPrice: trade.exitPrice,
           stopLoss: trade.stopLoss || 0,
           takeProfit: trade.takeProfit || 0,
-          lotSize: trade.volume,
+          volume: trade.volume,
           riskRewardRatio: 0, // Will be calculated
-          stopLossAmount: Math.abs(trade.profit), // Simplified
+          stopLossAmount: outcome === 'loss' ? Math.abs(trade.profit) : 0,
           takeProfitAmount: outcome === 'win' ? Math.abs(trade.profit) : 0,
           breakEvenAmount: undefined,
           notes: `Imported from MT5 report`,
@@ -317,7 +317,7 @@ const TradeForm: React.FC<TradeFormProps> = ({ editMode = false }) => {
             exitPrice: trade.exitPrice.toString(),
             stopLoss: trade.stopLoss.toString(),
             takeProfit: trade.takeProfit.toString(),
-            lotSize: trade.lotSize.toString(),
+            volume: trade.volume.toString(),
             stopLossAmount: trade.stopLossAmount.toString(),
             takeProfitAmount: trade.takeProfitAmount.toString(),
             breakEvenAmount: trade.breakEvenAmount?.toString() || '',
@@ -358,8 +358,8 @@ const TradeForm: React.FC<TradeFormProps> = ({ editMode = false }) => {
           const entryTime = cells[0]?.textContent?.trim();
           const symbol = cells[2]?.textContent?.trim();
           const type = cells[3]?.textContent?.trim();
-          const volume = cells[4]?.textContent?.trim();
-          const entryPrice = cells[5]?.textContent?.trim();
+          const volume = cells[4]?.textContent?.trim(); // This is the lot size
+          const entryPrice = cells[5]?.textContent?.trim(); // This is the entry price
           const stopLoss = cells[6]?.textContent?.trim();
           const takeProfit = cells[7]?.textContent?.trim();
           const exitTime = cells[8]?.textContent?.trim();
@@ -550,7 +550,7 @@ const TradeForm: React.FC<TradeFormProps> = ({ editMode = false }) => {
         exitPrice: parseFloat(formData.exitPrice),
         stopLoss: parseFloat(formData.stopLoss),
         takeProfit: formData.outcome === 'loss' ? 0 : parseFloat(formData.takeProfit || '0'),
-        lotSize: parseFloat(formData.lotSize),
+        volume: parseFloat(formData.volume),
         riskRewardRatio: riskRewardRatio,
         stopLossAmount: parseFloat(formData.stopLossAmount),
         takeProfitAmount: formData.outcome === 'loss' ? 0 : parseFloat(formData.takeProfitAmount || '0'),
@@ -697,17 +697,17 @@ const TradeForm: React.FC<TradeFormProps> = ({ editMode = false }) => {
           </div>
 
           <div>
-            <label htmlFor="lotSize" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Lot Size
+            <label htmlFor="volume" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Volume (Lot Size)
             </label>
             <input
               type="number"
-              id="lotSize"
-              name="lotSize"
+              id="volume"
+              name="volume"
               step="0.01"
               required
               className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
-              value={formData.lotSize}
+              value={formData.volume}
               onChange={handleChange}
             />
           </div>
@@ -756,7 +756,6 @@ const TradeForm: React.FC<TradeFormProps> = ({ editMode = false }) => {
               id="takeProfit"
               name="takeProfit"
               step="0.00001"
-              required={formData.outcome !== 'loss'}
               disabled={formData.outcome === 'loss'}
               className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
               value={formData.takeProfit}
@@ -817,7 +816,6 @@ const TradeForm: React.FC<TradeFormProps> = ({ editMode = false }) => {
               id="takeProfitAmount"
               name="takeProfitAmount"
               step="0.01"
-              required={formData.outcome !== 'loss'}
               disabled={formData.outcome === 'loss'}
               className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:text-white sm:text-sm"
               value={formData.takeProfitAmount}
