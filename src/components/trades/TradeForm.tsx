@@ -355,16 +355,37 @@ const TradeForm: React.FC<TradeFormProps> = ({ editMode = false }) => {
       positionRows.forEach(row => {
         const cells = row.querySelectorAll('td');
         if (cells.length >= 14) {
+          // Based on your MT5 report structure:
+          // Time | Position | Symbol | Type | Volume | Price | S/L | T/P | Time | Price | Commission | Swap | Profit
           const entryTime = cells[0]?.textContent?.trim();
+          const position = cells[1]?.textContent?.trim();
           const symbol = cells[2]?.textContent?.trim();
           const type = cells[3]?.textContent?.trim();
-          const volume = cells[4]?.textContent?.trim(); // This is the lot size
-          const entryPrice = cells[5]?.textContent?.trim(); // This is the entry price
-          const stopLoss = cells[6]?.textContent?.trim();
-          const takeProfit = cells[7]?.textContent?.trim();
-          const exitTime = cells[8]?.textContent?.trim();
-          const exitPrice = cells[9]?.textContent?.trim();
-          const profit = cells[13]?.textContent?.trim();
+          
+          // Find the volume - it might be in a cell with class=""
+          let volume = '';
+          let entryPrice = '';
+          let stopLoss = '';
+          let takeProfit = '';
+          let exitTime = '';
+          let exitPrice = '';
+          let profit = '';
+          
+          // Look for cells with class="" which contain the actual data
+          const dataCells = row.querySelectorAll('td.=""');
+          if (dataCells.length >= 8) {
+            volume = dataCells[0]?.textContent?.trim(); // Volume (lot size)
+            entryPrice = dataCells[1]?.textContent?.trim(); // Entry price
+            stopLoss = dataCells[2]?.textContent?.trim(); // Stop loss
+            takeProfit = dataCells[3]?.textContent?.trim(); // Take profit
+            exitTime = dataCells[4]?.textContent?.trim(); // Exit time
+            exitPrice = dataCells[5]?.textContent?.trim(); // Exit price
+            // Skip commission and swap (dataCells[6] and dataCells[7])
+          }
+          
+          // Get profit from the last colspan="2" cell
+          const profitCell = row.querySelector('td[colspan="2"]');
+          profit = profitCell?.textContent?.trim();
           
           if (symbol && type && entryPrice && exitPrice) {
             trades.push({
